@@ -1,0 +1,257 @@
+syntax on
+filetype off " Pathogen needs to run before 'plugin on'.
+call pathogen#infect()
+call pathogen#helptags() " Generate helptags for everything in 'runtimepath'."
+filetype plugin indent on
+set title
+
+"------------------------------------------------------------------------------
+" General.
+"------------------------------------------------------------------------------
+set nocompatible        " Disable vi compatibility.
+set undolevels=200      " Number of undo levels.
+set scrolloff=10        " Keep a context (rows) when scrolling vertically.
+set sidescroll=5        " Keep a context (columns) when scrolling horizontally.
+set tabpagemax=1000     " Maximum number of tabs to open by the -p argument.
+set esckeys             " Cursor keys in insert mode.
+set ttyfast             " Improves redrawing for newer computers.
+set lazyredraw          " Don't redraw during complex operations (e.g. macros).
+set autowrite           " Automatically save before :next, :make etc.
+set confirm             " Ask to save file before operations like :q or :e fail.
+set magic               " Use 'magic' patterns (extended regular expressions).
+set nojoinspaces        " Insert just one space joining lines with J.
+set showcmd             " Show (partial) command in the status line.
+set showmode            " Show the current mode.
+set path=$PWD/**        " Include everything under $PWD into the path.
+
+
+" Disable arrow keys
+inoremap <Up> <NOP>
+inoremap <Down> <NOP>
+inoremap <Left> <NOP>
+inoremap <Right> <NOP>
+noremap <Up> <NOP>
+noremap <Down> <NOP>
+noremap <Left> <NOP>
+noremap <Right> <NOP>
+
+" Visually wrap long lines
+noremap <silent> <expr> j (v:count == 0 ? 'gj' : 'j')
+noremap <silent> <expr> k (v:count == 0 ? 'gk' : 'k')
+
+" Real programmers don't use TABs but spaces
+set tabstop=4           " Number of spaces a tab counts for.
+set softtabstop=4
+set shiftwidth=4        " Number of spaces to use for each step of indent.
+set shiftround          " Round indent to multiple of shiftwidth"
+set expandtab
+
+" Showing line numbers and length
+set number              " show line numbers
+set tw=79               " width of document (used by gd)
+set nowrap              " don't automatically wrap on load
+set fo-=t               " don't automatically wrap text when typing
+set relativenumber      " Show relative numbers instead of absolute ones.
+set colorcolumn=80
+highlight ColorColumn ctermbg=233
+
+" Highlight trailing whitespace in red
+" Have highlighting not appear while you are typing in insert mode
+" Have the highlighting of whitespace apply when you open new buffers
+highlight ExtraWhitespace ctermbg=red guibg=red
+match ExtraWhitespace /\s\+$/
+autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
+autocmd InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
+autocmd InsertLeave * match ExtraWhitespace /\s\+$/
+autocmd BufWinLeave * call clearmatches()
+
+" Fix BufwinEnter memory leak - each time BufWinEnter commands are executed
+" a buffer is displayed. This leads to a memory leak which slowly impacts
+" performance (For vim < 7.2
+if version >= 702
+    autocmd BufWinLeave * call clearmatches()
+endif
+
+autocmd BufRead /tmp/mutt*      :source ~/.vim/mail
+
+" Function key maps
+" F8 - Disable auto indent
+nnoremap <F8> :setl noai nocin nosi inde=<CR>
+" F9 - Spell check
+autocmd FileType mail :nmap <F9> :w<CR>:!aspell -e -c %<CR>:e<CR>
+
+" Disable stupid backup and swap files
+set nobackup
+set nowritebackup
+set noswapfile
+
+" Better navigating through omnicomplete option list
+" See http://stackoverflow.com/questions/2170023/how-to-map-keys-for-popup-menu-in-vim
+set completeopt=longest,menuone
+function! OmniPopup(action)
+    if pumvisible()
+        if a:action == 'j'
+            return "\<C-N>"
+        elseif a:action == 'k'
+            return "\<C-P>"
+        endif
+    endif
+    return a:action
+endfunction
+
+inoremap <silent><C-j> <C-R>=OmniPopup('j')<CR>
+inoremap <silent><C-k> <C-R>=OmniPopup('k')<CR>
+
+" Powerline
+let g:Powerline_symbols = 'fancy'
+set laststatus=2
+set guifont=Inconsolata\ for\ Powerline:h15
+set encoding=utf-8
+set t_Co=256
+set fillchars+=stl:\ ,stlnc:\
+set term=xterm-256color
+set termencoding=utf-8
+set statusline+=%f
+
+" NERDTree Tabs
+map <C-n> :NERDTreeToggle<CR>
+let g:NERDTreeDirArrows = 1
+let g:NERDTreeGlyphReadOnly = 1
+let g:NERDTreeDirArrowExpandable = 'â–¸'
+let g:NERDTreeDirArrowCollapsible = 'â–¾'
+
+" Indent highlight
+" vertical line indentation
+let g:indentLine_color_term = 155
+let g:indentLine_char = '|'
+
+" Settings for ctrlp
+" Use <leader>t to open ctrlp
+let g:ctrlp_map = '<leader>t'
+" disable caching
+let g:ctrlp_use_caching=0
+let g:ctrlp_max_height = 30
+set wildignore+=*.pyc
+set wildignore+=*_build/*
+set wildignore+=*/coverage/*
+
+" Tabline.
+set showtabline=1       " Display a tabline only if there are at least two tabs.
+" Use a custom function that displays tab numbers in the tabline. Based on
+" http://superuser.com/a/477221.
+function! MyTabLine()
+    let s = ''
+    let wn = ''
+    let t = tabpagenr()
+    let i = 1
+    while i <= tabpagenr('$')
+        let buflist = tabpagebuflist(i)
+        let winnr = tabpagewinnr(i)
+        let s .= '%' . i . 'T'
+        let s .= (i == t ? '%1*' : '%2*')
+        let s .= ' '
+        let wn = tabpagewinnr(i,'$')
+        let s .= '%#TabNum#'
+        let s .= i
+        let s .= (i == t ? '%#TabLineSel#' : '%#TabLine#')
+        let bufnr = buflist[winnr - 1]
+        let file = bufname(bufnr)
+        let buftype = getbufvar(bufnr, 'buftype')
+        if buftype == 'nofile'
+            if file =~ '\/.'
+                let file = substitute(file, '.*\/\ze.', '', '')
+            endif
+        else
+            " Shorten file name to include only first letters of each
+            " directory.
+            let file = pathshorten(file)
+        endif
+        if file == ''
+            let file = '[No Name]'
+        endif
+        let s .= ' ' . file . ' '
+        let i = i + 1
+        " Add '[+]' if one of the buffers in the tab page is modified.
+        for bufnr in buflist
+            if getbufvar(bufnr, '&modified')
+                let s .= '[+]'
+                break
+            endif
+        endfor
+    endwhile
+    let s .= '%T%#TabLineFill#%='
+    return s
+endfunction
+set tabline=%!MyTabLine()
+highlight link TabNum Special
+
+" Searching.
+set hlsearch            " Highlight search matches.
+set incsearch           " Incremental search.
+" Case-smart searching (make /-style searches case-sensitive only if there is
+" a capital letter in the search expression).
+set ignorecase
+set smartcase
+
+
+" Allow backspacing over everything in insert mode.
+set backspace=indent,eol,start
+
+" Golang
+let g:go_fmt_command = "goimports"
+let g:go_def_mapping_enabled = 1
+let g:go_highlight_functions = 1
+let g:go_highlight_methods = 1
+let g:go_highlight_structs = 1
+let g:go_highlight_operators = 1
+let g:go_highlight_build_constraints = 1
+
+let g:tagbar_type_go = {
+    \ 'ctagstype' : 'go',
+    \ 'kinds'     : [
+        \ 'p:package',
+        \ 'i:imports:1',
+        \ 'c:constants',
+        \ 'v:variables',
+        \ 't:types',
+        \ 'n:interfaces',
+        \ 'w:fields',
+        \ 'e:embedded',
+        \ 'm:methods',
+        \ 'r:constructor',
+        \ 'f:functions'
+    \ ],
+    \ 'sro' : '.',
+    \ 'kind2scope' : {
+        \ 't' : 'ctype',
+        \ 'n' : 'ntype'
+    \ },
+    \ 'scope2kind' : {
+        \ 'ctype' : 't',
+        \ 'ntype' : 'n'
+    \ },
+    \ 'ctagsbin'  : 'gotags',
+    \ 'ctagsargs' : '-sort -silent'
+\ }
+
+" Neocomplete
+let g:acp_enableAtStartup = 0
+let g:neocomplete#enable_at_startup = 1
+let g:neocomplete#enable_smart_case = 1
+let g:neocomplete#auto_completion_start_length = 3
+
+if !exists('g:neocomplete#force_omni_input_patterns')
+    let g:neocomplete#force_omni_input_patterns = {}
+endif
+let g:neocomplete#force_omni_input_patterns.go = '[^.[:digit:] *\t]\.'
+
+inoremap <expr> <C-j> pumvisible() ? '<C-n>' : '<C-j>'
+inoremap <expr> <C-k> pumvisible() ? '<C-p>' : '<C-k>'
+inoremap <expr> <TAB> pumvisible() ? '<C-n>' : '<TAB>'
+
+" Tagbar
+nmap <F8> :TagbarToggle<CR>
+
+" https://github.com/s3rvac/dotfiles/blob/master/vim/.vimrc
+" Neocomplete https://github.com/Shougo/neocomplete.vim
+" Powerline and theme https://gist.github.com/kevin-smets/8568070
