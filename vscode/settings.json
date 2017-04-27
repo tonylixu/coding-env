@@ -1,0 +1,19 @@
+// Place your settings in this file to overwrite the default settings
+{
+
+  // Show whitespaces
+  "editor.renderWhitespace": true,
+
+  // Overwrite tabsize to 2
+  "editor.tabSize": 2,
+
+  // Specifies the color theme used in the workbench.
+  "workbench.colorTheme": "Solarized Dark",
+
+  // Configure terminals
+  // Git Bash
+  "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
+
+  // Overwrite the wordwrap behaviour
+  "editor.wordWrap": "on"
+}
